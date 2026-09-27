@@ -5,6 +5,9 @@ on:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   alert:
     runs-on: ubuntu-latest
@@ -13,8 +16,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - uses: actions/cache/restore@v4
+        with:
+          path: state.json
+          key: rasd2-state-${{ github.run_id }}
+          restore-keys: |
+            rasd2-state-
       - name: Run
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
         run: node alert.mjs
+      - uses: actions/cache/save@v4
+        if: always()
+        continue-on-error: true
+        with:
+          path: state.json
+          key: rasd2-state-${{ github.run_id }}
